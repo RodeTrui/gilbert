@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#fbfaf6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Eco-Dojo">
+<title>Eco-Dojo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+/* Plan: zwart-wit mangapagina met één rode inktkleur en gele accenten. Panelen in een 2-koloms raster, op een telefoon 1 kolom. */
+:root{
+  --ink:#141414;
+  --paper:#fbfaf6;
+  --red:#e4262b;
+  --yellow:#ffd23f;
+  --blue:#4ea8de;
+  --tone:#d9d6cc;
+  --display:'Bangers','Impact','Arial Narrow',sans-serif;
+  --body:'Patrick Hand','Comic Sans MS','Segoe UI',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{background:var(--paper)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.35}
+header{padding:24px 14px 8px;max-width:600px;margin:0 auto}
+h1{font-family:var(--display);font-size:clamp(44px,9vw,84px);letter-spacing:2px;margin:0;line-height:.95;text-wrap:balance}
+h1 span{color:var(--red)}
+.sub{margin:8px 0 0;font-size:20px;max-width:60ch}
+.cast{display:flex;flex-wrap:wrap;gap:16px;margin:18px 0 6px}
+.cast div{display:flex;align-items:center;gap:10px;border:3px solid var(--ink);background:#fff;padding:6px 14px 6px 8px;border-radius:12px}
+.cast svg{width:52px;height:52px}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+nav a{font-family:var(--display);font-size:17px;letter-spacing:1px;text-decoration:none;color:var(--ink);border:2.5px solid var(--ink);background:var(--yellow);padding:6px 10px;border-radius:6px}
+nav a:hover,nav a:focus-visible{background:var(--red);color:#fff;outline:none}
+main{max-width:600px;margin:0 auto;padding:0 14px 60px}
+.chapter{margin-top:34px;scroll-margin-top:12px}
+.chapter h2{font-family:var(--display);font-size:clamp(28px,5vw,44px);letter-spacing:1.5px;margin:0 0 12px;display:flex;align-items:center;gap:12px}
+.chapter h2 b{background:var(--ink);color:var(--yellow);padding:0 12px;border-radius:6px;font-weight:400}
+.page{display:flex;flex-direction:column;gap:14px}
+.panel{border:4px solid var(--ink);background:#fff;display:flex;flex-direction:column;min-width:0;position:relative}
+.scene{border-bottom:4px solid var(--ink);background-image:radial-gradient(var(--tone) 1.3px,transparent 1.6px);background-size:8px 8px;background-color:#fff}
+.scene svg{display:block;width:100%;height:auto}
+.scene text{font-family:var(--body)}
+.talk{display:flex;flex-direction:column;gap:10px;padding:12px}
+.line{display:flex;align-items:flex-start;gap:8px}
+.line.right{flex-direction:row-reverse}
+.line svg{flex:none;width:46px;height:46px}
+.bubble{position:relative;border:3px solid var(--ink);border-radius:18px;background:#fff;padding:8px 12px;flex:1;min-width:0;font-size:19px;line-height:1.3}
+.bubble::before{content:"";position:absolute;top:14px;left:-11px;width:16px;height:16px;background:#fff;border-left:3px solid var(--ink);border-bottom:3px solid var(--ink);transform:rotate(45deg)}
+.right .bubble::before{left:auto;right:-11px;transform:rotate(-135deg)}
+.bubble.prof{background:var(--yellow)}
+.bubble.prof::before{background:var(--yellow)}
+.who{font-family:var(--display);letter-spacing:1px;font-size:14px;color:var(--red);display:block;line-height:1}
+.test{margin-top:12px;border:3px dashed var(--ink);padding:10px 14px;background:#fff}
+.test button{font-family:var(--display);font-size:20px;letter-spacing:1px;border:3px solid var(--ink);background:var(--red);color:#fff;padding:8px 18px;min-height:44px;border-radius:8px;cursor:pointer}
+.test button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.test p{margin:8px 0 0}
+.ans{display:none;margin-top:8px;padding:6px 10px;background:var(--yellow);border:2px solid var(--ink)}
+.ans.show{display:block}
+footer{max-width:600px;margin:0 auto;padding:0 14px 40px;font-size:16px}
+@media (max-width:420px){body{font-size:17px}.cast div{flex:1 1 100%}}
+@media (prefers-reduced-motion:no-preference){nav a{transition:background .15s}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Eco-<span>Dojo</span></h1>
+  <p class="sub">Een mangastrip over Algemene economie. Mika heeft bijna geen energie, Prof. Miauw heeft nog minder geduld. Samen doorlopen ze de hele leerstof van het examen.</p>
+  <div class="cast" id="cast"></div>
+  <nav id="nav" aria-label="Hoofdstukken"></nav>
+</header>
+<main id="book"></main>
+<footer>Alle voorbeeldcijfers komen uit je eigen samenvatting en proefexamen. Test jezelf onder elk hoofdstuk en lees de strip van boven naar onder, links naar rechts.</footer>
+
+<script>
+var INK='#141414',RED='#e4262b',YEL='#ffd23f',BLU='#4ea8de',GRN='#7bc96f',WHT='#ffffff',GRY='#d9d6cc';
+
+/* ---------- personages ---------- */
+function av(k){
+  if(k==='P'){
+    return '<svg viewBox="0 0 60 60" aria-hidden="true">'+
+    '<polygon points="10,26 12,4 28,16" fill="#f4a259" stroke="'+INK+'" stroke-width="3" stroke-linejoin="round"/>'+
+    '<polygon points="50,26 48,4 32,16" fill="#f4a259" stroke="'+INK+'" stroke-width="3" stroke-linejoin="round"/>'+
+    '<ellipse cx="30" cy="34" rx="22" ry="20" fill="#f4a259" stroke="'+INK+'" stroke-width="3"/>'+
+    '<circle cx="21" cy="31" r="7" fill="#fff" stroke="'+INK+'" stroke-width="2.5"/><circle cx="39" cy="31" r="7" fill="#fff" stroke="'+INK+'" stroke-width="2.5"/>'+
+    '<line x1="28" y1="31" x2="32" y2="31" stroke="'+INK+'" stroke-width="2.5"/>'+
+    '<circle cx="21" cy="32" r="2.2" fill="'+INK+'"/><circle cx="39" cy="32" r="2.2" fill="'+INK+'"/>'+
+    '<polygon points="27,40 33,40 30,44" fill="'+RED+'" stroke="'+INK+'" stroke-width="1.5"/>'+
+    '<path d="M24 47 Q30 51 36 47" fill="none" stroke="'+INK+'" stroke-width="2.5" stroke-linecap="round"/>'+
+    '<g stroke="'+INK+'" stroke-width="1.8"><line x1="6" y1="40" x2="16" y2="42"/><line x1="54" y1="40" x2="44" y2="42"/></g></svg>';
+  }
+  var mood=k.length>1?k.charAt(1):'';
+  var eyes,mouth;
+  if(mood==='z'){eyes='<path d="M16 32 Q21 35 26 32 M34 32 Q39 35 44 32" fill="none" stroke="'+INK+'" stroke-width="3" stroke-linecap="round"/>';mouth='<line x1="26" y1="45" x2="34" y2="45" stroke="'+INK+'" stroke-width="3" stroke-linecap="round"/>';}
+  else if(mood==='!'){eyes='<path d="M16 34 Q21 27 26 34 M34 34 Q39 27 44 34" fill="none" stroke="'+INK+'" stroke-width="3" stroke-linecap="round"/>';mouth='<path d="M22 42 Q30 54 38 42 Z" fill="#fff" stroke="'+INK+'" stroke-width="2.5" stroke-linejoin="round"/>';}
+  else{eyes='<circle cx="21" cy="32" r="3.2" fill="'+INK+'"/><circle cx="39" cy="32" r="3.2" fill="'+INK+'"/>';mouth='<path d="M25 44 Q30 48 35 44" fill="none" stroke="'+INK+'" stroke-width="3" stroke-linecap="round"/>';}
+  return '<svg viewBox="0 0 60 60" aria-hidden="true">'+
+  '<polygon points="8,30 6,6 20,16 26,2 32,14 42,2 46,16 56,8 52,30" fill="'+INK+'"/>'+
+  '<ellipse cx="30" cy="36" rx="21" ry="20" fill="#ffe0bd" stroke="'+INK+'" stroke-width="3"/>'+
+  '<path d="M9 28 Q30 12 51 28 L51 22 Q30 6 9 22 Z" fill="'+INK+'"/>'+
+  '<rect x="9" y="22" width="42" height="6" fill="'+RED+'" stroke="'+INK+'" stroke-width="2"/>'+
+  eyes+mouth+'</svg>';
+}
+var NAME={M:'Mika','M!':'Mika','Mz':'Mika',P:'Prof. Miauw'};
+
+/* ---------- tekenhulp ---------- */
+function T(x,y,s,o){o=o||{};return '<text x="'+x+'" y="'+y+'" text-anchor="'+(o.a||'middle')+'" font-size="'+(o.s||13)+'" fill="'+(o.c||INK)+'" font-weight="'+(o.w||400)+'">'+s+'</text>';}
+function R(x,y,w,h,f,r){return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+(r===undefined?6:r)+'" fill="'+f+'" stroke="'+INK+'" stroke-width="2.5"/>';}
+function L(x1,y1,x2,y2,o){o=o||{};return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+(o.c||INK)+'" stroke-width="'+(o.w||2.5)+'"'+(o.d?' stroke-dasharray="'+o.d+'"':'')+(o.arrow?' marker-end="url(#ah)"':'')+' stroke-linecap="round"/>';}
+function C(x,y,r,f){return '<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+f+'" stroke="'+INK+'" stroke-width="2.5"/>';}
+var DEFS='<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="'+INK+'"/></marker></defs>';
+
+function burst(lines,o){
+  o=o||{};var cx=150,cy=75,pts=[],n=18,i,a,r;
+  for(i=0;i<n*2;i++){a=Math.PI*i/n;r=(i%2?58:72);pts.push((cx+Math.cos(a)*r*1.9).toFixed(1)+','+(cy+Math.sin(a)*r*.98).toFixed(1));}
+  var out='<polygon points="'+pts.join(' ')+'" fill="'+(o.f||YEL)+'" stroke="'+INK+'" stroke-width="3" stroke-linejoin="round"/>';
+  var y=cy-(lines.length-1)*11+4;
+  for(i=0;i<lines.length;i++){out+=T(cx,y+i*22,lines[i],{s:o.s||17,w:700});}
+  return out;
+}
+
+function graph(o){
+  o=o||{};var sd=o.sd||0,ss=o.ss||0;
+  function yD(x){return 25+0.5*(x-45-sd);}
+  function yS(x){return 120-0.5*(x-45-ss);}
+  var xe=140+(sd+ss)/2,ye=yD(xe),out='';
+  if(o.tri){
+    out+='<polygon points="30,'+yD(30)+' '+xe+','+ye+' 30,'+ye+'" fill="'+BLU+'" opacity=".55"/>';
+    out+='<polygon points="30,'+ye+' '+xe+','+ye+' 30,'+yS(30)+'" fill="'+GRN+'" opacity=".6"/>';
+  }
+  if(o.old){out+=L(45,25,235,120,{d:'5 5',c:'#777',w:2});}
+  if(o.oldS){out+=L(45,120,235,25,{d:'5 5',c:'#777',w:2});}
+  out+=L(30,135,30,8,{arrow:1})+L(30,135,262,135,{arrow:1});
+  out+=T(18,14,'P',{s:12,w:700})+T(256,148,'Q',{s:12,w:700});
+  if(!o.noD)out+=L(45+sd,25,235+sd,120,{c:RED,w:3.5});
+  if(!o.noS)out+=L(45+ss,120,235+ss,25,{c:INK,w:3.5});
+  if(!o.noD)out+=T(238+sd,132,'vraag',{s:11,c:RED,w:700,a:'start'});
+  if(!o.noS)out+=T(238+ss,22,'aanbod',{s:11,a:'start',w:700});
+  if(o.hline!==undefined){
+    var yh=ye+o.hline;out+=L(30,yh,262,yh,{d:'6 4',c:INK,w:2.5});
+    out+=T(150,yh+(o.hline<0?-5:14),o.hlabel||'',{s:12,w:700});
+  }
+  if(o.dot!==false){out+=C(xe,ye,5.5,YEL);}
+  if(o.dotlab){out+=T(xe+10,ye-8,o.dotlab,{s:12,w:700,a:'start'});}
+  if(o.note)out+=T(150,o.noteY||12,o.note,{s:12,w:700});
+  return out;
+}
+
+function shop(x,y,w,h,f){return '<rect x="'+x+'" y="'+(y+h*.3)+'" width="'+w+'" height="'+(h*.7)+'" fill="'+f+'" stroke="'+INK+'" stroke-width="2.5"/><polygon points="'+(x-3)+','+(y+h*.3)+' '+(x+w+3)+','+(y+h*.3)+' '+(x+w/2)+','+y+'" fill="'+RED+'" stroke="'+INK+'" stroke-width="2.5" stroke-linejoin="round"/><rect x="'+(x+w*.38)+'" y="'+(y+h*.58)+'" width="'+(w*.24)+'" height="'+(h*.42)+'" fill="#fff" stroke="'+INK+'" stroke-width="2"/>';}
+
+/* ---------- scènes ---------- */
+var SC={
+kringloop:function(){
+  return R(6,56,76,36,YEL)+T(44,78,'Gezinnen',{s:13,w:700})+
+  R(218,56,76,36,BLU)+T(256,78,'Bedrijven',{s:13,w:700})+
+  R(110,4,80,30,'#fff')+T(150,24,'Overheid',{s:13,w:700})+
+  R(110,116,80,30,GRN)+T(150,136,'Banken',{s:13,w:700})+
+  '<ellipse cx="150" cy="75" rx="34" ry="11" fill="#fff" stroke="'+INK+'" stroke-width="2.5"/>'+T(150,79,'buitenland',{s:10})+
+  L(80,62,216,62,{arrow:1})+T(150,55,'C (consumptie)',{s:10})+
+  L(216,88,84,88,{arrow:1})+T(150,103,'Y (loon, inkomen)',{s:10})+
+  L(40,54,112,26,{arrow:1})+T(60,34,'T',{s:12,w:700})+
+  L(190,24,254,54,{arrow:1})+T(246,34,'G',{s:12,w:700})+
+  L(40,94,112,124,{arrow:1})+T(62,118,'S',{s:12,w:700})+
+  L(190,128,254,94,{arrow:1})+T(246,122,'I',{s:12,w:700});
+},
+bakker:function(){
+  return R(12,50,52,50,'#e8d3a8')+T(38,72,'bloem',{s:12,w:700})+T(38,90,'€200',{s:15,w:700,c:RED})+
+  L(68,75,100,75,{arrow:1})+
+  shop(104,46,70,60,YEL)+T(139,125,'bakker',{s:12,w:700})+
+  L(178,75,208,75,{arrow:1})+
+  '<ellipse cx="250" cy="76" rx="36" ry="24" fill="#e8b66b" stroke="'+INK+'" stroke-width="2.5"/>'+T(250,72,'brood',{s:12,w:700})+T(250,89,'€500',{s:15,w:700,c:RED})+
+  R(4,2,292,28,'#fff')+T(150,21,'toegevoegde waarde = 500 − 200 = €300',{s:13,w:700});
+},
+bars:function(){
+  return T(150,16,'BTV = 100',{s:14,w:700})+
+  R(20,26,260,34,GRN)+T(150,48,'NTV (netto)',{s:13,w:700})+
+  R(190,26,90,34,RED)+T(235,48,'afschrijving',{s:12,w:700,c:'#fff'})+
+  T(150,86,'BTV − afschrijving = NTV',{s:14,w:700})+
+  R(30,98,240,36,'#fff')+T(150,121,'bv. 50.000 − 5.000 = 45.000',{s:14,w:700});
+},
+niveaus:function(){
+  return L(30,135,30,8,{arrow:1})+L(30,135,270,135,{arrow:1})+
+  R(60,20,70,115,BLU,0)+T(95,14,'440',{s:14,w:700})+T(95,80,'nominaal',{s:12,w:700})+T(95,96,'lopende prijzen',{s:9})+
+  R(170,45,70,90,GRN,0)+T(205,39,'400',{s:14,w:700})+T(205,85,'reëel',{s:12,w:700})+T(205,101,'constante prijzen',{s:9})+
+  L(132,60,166,70,{arrow:1})+T(150,52,'÷ 110 × 100',{s:10,w:700});
+},
+hdi:function(){
+  return C(150,76,28,YEL)+T(150,82,'HDI',{s:18,w:700})+
+  C(52,36,28,'#fff')+T(52,34,'inkomen',{s:11,w:700})+T(52,47,'(bni)',{s:9})+
+  C(248,36,28,'#fff')+T(248,34,'levens-',{s:11,w:700})+T(248,47,'verwachting',{s:9})+
+  C(150,128,24,'#fff')+T(150,126,'scholings-',{s:10,w:700})+T(150,138,'graad',{s:10,w:700})+
+  L(74,50,126,68)+L(226,50,174,68)+L(150,104,150,108);
+},
+graf:function(p){return graph(p);},
+shopsMany:function(){
+  var o='',i,j;
+  for(j=0;j<2;j++)for(i=0;i<5;i++)o+=shop(18+i*55,12+j*62,38,40,'#fff');
+  return o+T(150,146,'veel aanbieders, zelfde product',{s:12,w:700});
+},
+shopsOne:function(){
+  return shop(95,22,110,100,YEL)+'<polygon points="125,18 135,2 150,14 165,2 175,18" fill="'+YEL+'" stroke="'+INK+'" stroke-width="2.5" stroke-linejoin="round"/>'+T(150,144,'één aanbieder, uniek product',{s:12,w:700});
+},
+shopsFew:function(){
+  return shop(14,30,78,80,BLU)+shop(111,30,78,80,YEL)+shop(208,30,78,80,GRN)+T(150,18,'elkaar in de gaten houden',{s:12,w:700})+T(150,134,'enkele grote aanbieders',{s:12,w:700});
+},
+shopsDiff:function(){
+  var cols=[RED,BLU,YEL,GRN,'#f4a259','#c9a0dc'],o='',i;
+  for(i=0;i<6;i++)o+=shop(12+i*47,28,38,48,cols[i]);
+  return o+T(150,104,'veel aanbieders, elk met eigen merk',{s:12,w:700})+T(150,124,'vrije toetreding, beetje marktmacht',{s:12,w:700});
+},
+kink:function(){
+  return L(30,135,30,8,{arrow:1})+L(30,135,262,135,{arrow:1})+T(18,14,'P',{s:12,w:700})+T(256,148,'Q',{s:12,w:700})+
+  '<polyline points="45,30 150,62 225,128" fill="none" stroke="'+RED+'" stroke-width="3.5" stroke-linejoin="round"/>'+
+  C(150,62,6,YEL)+T(160,52,'knik',{s:13,w:700,a:'start'})+
+  T(88,38,'prijs omhoog: niemand volgt',{s:9,a:'start'})+
+  T(168,100,'prijs omlaag:',{s:9,a:'start'})+T(168,111,'iedereen volgt',{s:9,a:'start'});
+},
+fabriek:function(){
+  return R(30,60,90,60,'#bbb',2)+R(100,22,16,40,'#bbb',2)+C(112,16,9,'#eee')+C(130,6,8,'#eee')+C(148,14,10,'#eee')+
+  '<path d="M0 132 Q40 120 80 132 T160 132 T240 132 T300 132 L300 150 L0 150 Z" fill="'+BLU+'" stroke="'+INK+'" stroke-width="2.5"/>'+
+  T(210,60,'prijs te laag,',{s:13,w:700})+T(210,77,'productie te hoog',{s:13,w:700})+
+  R(150,92,130,26,YEL)+T(215,110,'kosten niet in de prijs',{s:11,w:700});
+},
+tekort:function(){return graph({hline:22,hlabel:'maximumprijs',dot:true,note:'tekort tussen de pijlen',noteY:12,tri:false});},
+overschot:function(){return graph({hline:-22,hlabel:'minimumprijs',note:'overschot',noteY:12});},
+matrix:function(){
+  return T(100,14,'uitsluitbaar',{s:11,w:700})+T(210,14,'niet-uitsluitbaar',{s:11,w:700})+
+  R(50,20,100,52,YEL)+T(100,42,'PRIVAAT',{s:12,w:700})+T(100,58,'brood',{s:11})+
+  R(152,20,116,52,GRN)+T(210,42,'GEMEENSCHAPPELIJK',{s:10,w:700})+T(210,58,'vis in zee',{s:11})+
+  R(50,74,100,52,BLU)+T(100,96,'CLUBGOED',{s:12,w:700})+T(100,112,'Netflix',{s:11})+
+  R(152,74,116,52,'#fff')+T(210,96,'ZUIVER PUBLIEK',{s:11,w:700})+T(210,112,'straatverlichting',{s:11})+
+  T(24,50,'rivaliserend',{s:10,w:700,a:'middle'})+T(24,102,'niet-',{s:10,w:700})+T(24,113,'rivaliserend',{s:10,w:700});
+},
+golf:function(){
+  var pts=[],x;
+  for(x=20;x<=280;x+=4)pts.push(x+','+(70-Math.sin((x-20)/38)*38-(x-20)*0.12+18).toFixed(1));
+  return L(15,135,285,135,{arrow:1})+L(20,130,20,8,{arrow:1})+
+  L(20,100,280,66,{d:'7 5',c:'#555',w:2})+T(236,62,'trend',{s:11,w:700,c:'#555'})+
+  '<polyline points="'+pts.join(' ')+'" fill="none" stroke="'+RED+'" stroke-width="3.5" stroke-linejoin="round"/>'+
+  T(72,26,'hoog (boom)',{s:11,w:700})+T(180,126,'laag (slump)',{s:11,w:700})+T(120,62,'recessie',{s:11,w:700,c:RED})+T(205,62,'herstel',{s:11,w:700,c:RED});
+},
+tags:function(){
+  return '<polygon points="30,40 100,40 120,70 100,100 30,100" fill="#fff" stroke="'+INK+'" stroke-width="2.5" stroke-linejoin="round"/>'+T(72,76,'€104',{s:20,w:700})+T(72,28,'2023',{s:12,w:700})+
+  L(128,70,172,70,{arrow:1})+T(150,60,'+5%',{s:16,w:700,c:RED})+
+  '<polygon points="180,40 250,40 270,70 250,100 180,100" fill="'+YEL+'" stroke="'+INK+'" stroke-width="2.5" stroke-linejoin="round"/>'+T(222,76,'€109,2',{s:19,w:700})+T(222,28,'2024',{s:12,w:700})+
+  T(150,128,'inflatie = (109,2 − 104) / 104 = 5%',{s:13,w:700});
+},
+trap:function(){
+  var lab=['vrijhandelszone','douane-unie','gemeenschappelijke markt','economische unie','monetaire unie'],o='',i;
+  for(i=0;i<5;i++){o+=R(14+i*52,118-i*22,52,34+i*22,i===4?YEL:'#fff',2)+T(40+i*52,132-i*0,'',{});}
+  var short=['vrijhandels-','douane-','gem.','econ.','monet.'],short2=['zone','unie','markt','unie','unie'];
+  for(i=0;i<5;i++){o+=T(40+i*52,136,short[i],{s:9,w:700})+T(40+i*52,146,short2[i],{s:9,w:700});}
+  return o+L(30,100,250,20,{arrow:1,d:'4 4'});
+},
+handel:function(){
+  return '<path d="M5 100 L70 100 L85 82 L20 82 Z" fill="#8a5a2b" stroke="'+INK+'" stroke-width="2.5"/>'+
+  R(30,58,36,24,'#fff',2)+L(48,58,48,30)+'<polygon points="48,30 72,48 48,48" fill="'+RED+'" stroke="'+INK+'" stroke-width="2"/>'+
+  R(120,20,40,110,'#bbb',0)+T(140,76,'INVOER-',{s:10,w:700})+T(140,88,'RECHT',{s:10,w:700})+
+  '<path d="M0 118 Q20 108 40 118 T80 118 T120 118" fill="none" stroke="'+BLU+'" stroke-width="3"/>'+
+  T(224,48,'prijs omhoog',{s:13,w:700})+T(224,68,'verbruik omlaag',{s:13,w:700})+T(224,88,'producenten beschermd',{s:12,w:700})+T(224,108,'consument betaalt',{s:13,w:700});
+},
+munt:function(){
+  return C(70,60,38,YEL)+T(70,70,'€',{s:42,w:700})+C(230,60,38,GRN)+T(230,70,'$',{s:42,w:700})+
+  L(110,48,190,48,{arrow:1})+L(190,72,110,72,{arrow:1})+T(150,40,'€1 = $1,08',{s:13,w:700})+
+  R(46,112,208,28,'#fff')+T(150,131,'$540 ÷ 1,08 = €500',{s:15,w:700});
+},
+cyclus:function(){
+  var n=['oriënteren','voorbereiden','uitvoeren','rapporteren'],xy=[[60,40],[240,40],[240,110],[60,110]],o='',i;
+  for(i=0;i<4;i++)o+=R(xy[i][0]-50,xy[i][1]-18,100,36,i===0?YEL:'#fff',18)+T(xy[i][0],xy[i][1]+5,(i+1)+'. '+n[i],{s:12,w:700});
+  return o+L(112,40,186,40,{arrow:1})+L(240,60,240,90,{arrow:1})+L(188,110,112,110,{arrow:1})+L(60,90,60,60,{arrow:1});
+},
+burst:function(p){return burst(p.l,p);},
+burstRed:function(p){return burst(p.l,{f:'#ff9b9b',s:p.s});}
+};
+
+/* ---------- inhoud ---------- */
+var BOOK=[
+{t:'Het systeem',q:['Y = 1.000, T = 200 en C = 600. Hoeveel is S?','S = 200, want S = Y − T − C.'],p:[
+ {s:'kringloop',alt:'Kringloop met vijf spelers',b:[['P','Welkom in de Eco-Dojo, Mika! Vijf spelers: gezinnen, bedrijven, overheid, financiële instellingen en het buitenland.'],['Mz','Vijf spelers, en ik ben maar één gezin met een examen.']]},
+ {s:'burst',p:{l:['Gezinnen: Y = T + C + S','Bedrijven: Y = C + I + G + (X − M)'],s:13},alt:'Twee identiteiten',b:[['P','Gezinnen verdelen hun inkomen over belasting, consumptie en sparen. Bedrijven verkopen aan gezinnen, overheid, investeerders en het buitenland.'],['M','Dus alles wat ik verdien gaat naar de fiscus, mijn snacks of mijn spaarpot.']]},
+ {s:'burst',p:{l:['S + T = I + G + X − M','saldi: S−I, T−G, X−M'],s:16},alt:'Saldi',b:[['P','Banken zetten sparen om in krediet. Drie saldi: nationaal spaarsaldo (S − I), begrotingssaldo (T − G) en handelsbalanssaldo (X − M).'],['M!','Sparen min investeren, belasting min uitgaven, export min import. Gesnapt.']]},
+ {s:'burstRed',p:{l:['Klassiek model = blind','milieu + ongelijkheid'],s:17},alt:'Tekortkomingen',b:[['P','Het klassieke model vergeet milieu en sociale ongelijkheid. Daarom bestaan de circulaire economie (hergebruik) en de donuteconomie (sociale ondergrens, ecologische bovengrens).'],['Mz','Een donut. Dat onthoud ik wel.']]}
+]},
+{t:'Bbp en welvaart',q:['Het reëel bbp stijgt van 400 naar 420. Hoeveel is de groei?','5%, want 20 / 400.'],p:[
+ {s:'bakker',alt:'Bakker verkoopt brood',b:[['P','Toegevoegde waarde = omzet min aankopen bij andere bedrijven. De bakker koopt bloem voor €200 en verkoopt brood voor €500.'],['M!','€300! Dat is wat de bakker echt toevoegt.']]},
+ {s:'bars',alt:'BTV en NTV',b:[['P','BTV is inclusief afschrijvingen. NTV = BTV min afschrijvingen.'],['Mz','Bruto is met de slijtage van de machines, netto is wat overblijft.']]},
+ {s:'niveaus',alt:'Nominaal en reëel bbp',b:[['P','Het bbp is de som van alle toegevoegde waarde in een land. Nominaal is tegen lopende prijzen, reëel tegen constante prijzen. Voor groei gebruik je reëel: (nieuw − oud) / oud.'],['M','Het bnp is het bbp plus de inkomens van ons uit het buitenland, min die van buitenlanders hier.']]},
+ {s:'hdi',alt:'HDI',b:[['P','Het bbp per capita mist inkomensverdeling, milieu en geluk. Alternatieven: HDI (inkomen, levensverwachting, scholing), BNG (geluk), SSI (duurzaamheid) en EPI (milieu).'],['M!','HDI is drie dingen. Dat ga ik niet vergeten.']]}
+]},
+{t:'Vraag, aanbod en evenwicht',q:['Qv = 100 − 2P en Qa = −20 + 4P. Hoeveel zijn P en Q?','P = 20 en Q = 60.'],p:[
+ {s:'graf',p:{},alt:'Vraag- en aanbodcurve',b:[['P','Vraag daalt als de prijs stijgt. Aanbod stijgt als de prijs stijgt. Waar ze snijden zit het evenwicht.'],['M','Het gele bolletje.']]},
+ {s:'graf',p:{old:true,sd:34},alt:'Verschuiving van de vraagcurve',b:[['P','Verandert de prijs van het goed zelf? Dan beweeg je langs de curve. Verandert iets anders (inkomen, smaak, kosten, technologie, aantal aanbieders)? Dan schuift de hele curve.'],['M!','Inkomen omhoog: vraagcurve naar rechts, hogere prijs en hogere hoeveelheid.']]},
+ {s:'graf',p:{tri:true,dotlab:'P=20, Q=60'},alt:'Surplus',b:[['P','100 − 2P = −20 + 4P geeft 120 = 6P. Dus P = 20 en Q = 60. Maximumprijs 50 en minimumprijs 5: CS = ½ × 30 × 60 = 900 en PS = ½ × 15 × 60 = 450.'],['Mz','Blauwe driehoek voor de consument, groene voor de producent.']]},
+ {s:'burst',p:{l:['Pareto-optimum','CS + PS = welvaart'],s:18},alt:'Pareto',b:[['P','Pareto-optimum: niemand kan verbeteren zonder dat iemand anders verslechtert. Totale welvaart is CS + PS.'],['M!','Boven mijn prijs? Dat is mijn surplus!']]}
+]},
+{t:'Elasticiteit',q:['Prijs +10%, hoeveelheid −20%. Hoeveel is Ep? Wat doet de omzet bij een prijsverlaging?','Ep = −2, elastisch. Bij een prijsverlaging stijgt de omzet.'],p:[
+ {s:'burst',p:{l:['Ep = %ΔQ / %ΔP','|Ep| > 1: elastisch'],s:17},alt:'Prijselasticiteit',b:[['P','Boven 1 (absoluut) is de vraag elastisch: platte curve. Onder 1 is ze inelastisch: steile curve.'],['Mz','Plat is gevoelig, steil is koppig.']]},
+ {s:'burst',p:{l:['+10% prijs, −20% vraag','Ep = −2'],s:17},alt:'Voorbeeld',b:[['P','Prijs +10%, hoeveelheid −20%: Ep = −2, dus elastisch. Elastisch: prijs omlaag geeft meer omzet. Inelastisch (bv. −0,75): prijs omhoog geeft meer omzet.'],['M!','Voor de omzet doet het dus uit of ik goedkoper of duurder ben.']]},
+ {s:'burst',p:{l:['Ey > 0: gewoon goed','Ey < 0: inferieur'],s:17},alt:'Inkomenselasticiteit',b:[['P','Inkomenselasticiteit = %ΔQ / %Δinkomen. Positief is een gewoon goed (boven 1 een luxegoed). Negatief is een inferieur goed.'],['M','Als ik rijk word, koop ik minder instantnoedels.']]},
+ {s:'burst',p:{l:['Ek > 0: substituten','Ek < 0: complementen'],s:17},alt:'Kruiselasticiteit',b:[['P','Kruiselasticiteit positief: substituten (boter en margarine). Negatief: complementen (printer en inkt).'],['M!','Substituut = vervanger. Check.']]}
+]},
+{t:'Marktvormen',q:['Waarom zijn prijzen in een oligopolie star?','Door de knikvraagcurve: een prijsverlaging wordt gevolgd, een verhoging niet.'],p:[
+ {s:'shopsMany',alt:'Volkomen concurrentie',b:[['P','Volkomen concurrentie: veel aanbieders, homogeen product, vrije toetreding en volledige informatie. Producenten zijn prijsnemers. De winst is maximaal bij MK = MO.'],['M','Allemaal dezelfde friet.']]},
+ {s:'shopsOne',alt:'Monopolie',b:[['P','Monopolie: één aanbieder. Hij kiest de hoeveelheid waar MO = MK en leest de prijs af op de vraagcurve. Resultaat: hogere prijs en lagere hoeveelheid.'],['Mz','De koning van de markt.']]},
+ {s:'kink',alt:'Knikvraagcurve',b:[['P','Oligopolie: enkele aanbieders. Verlaag je de prijs, dan volgen ze. Verhoog je hem, dan volgen ze niet. Daarom de knik en de prijsstarheid.'],['M!','Dus beter niets doen.']]},
+ {s:'shopsDiff',alt:'Monopolistische concurrentie',b:[['P','Monopolistische concurrentie: veel aanbieders met gedifferentieerde producten (merk, service), makkelijke toetreding en een beetje marktmacht.'],['M','Zoals kapsalons en koffietenten.']]}
+]},
+{t:'Marktfalen en overheid',q:['Tot welk type goed hoort een visbestand in de open zee?','Gemeenschappelijk goed: rivaliserend en niet-uitsluitbaar.'],p:[
+ {s:'fabriek',alt:'Negatieve externaliteit',b:[['P','Negatief extern effect: kosten zitten niet in de prijs. Prijs te laag, productie te hoog. Oplossing: Pigouviaanse heffing. Positief extern effect (onderwijs): subsidie.'],['Mz','De rivier betaalt de rekening.']]},
+ {s:'burst',p:{l:['asymmetrische informatie','kartels, quota, emissierechten'],s:14},alt:'Andere marktfalen',b:[['P','Asymmetrische informatie: de ene partij weet meer (tweedehandsauto). Kartels worden aangepakt met antitrustbeleid. Verhandelbare vergunningen begrenzen uitstoot.'],['M','Overheid als scheidsrechter.']]},
+ {s:'tekort',alt:'Maximumprijs',b:[['P','Maximumprijs onder het evenwicht (huur): tekort. Minimumprijs erboven (landbouw): overschot. Productiequota beperken de productie.'],['M!','Te goedkoop betekent dat het op raakt.']]},
+ {s:'matrix',alt:'Soorten goederen',b:[['P','Uitsluitbaar en rivaliserend: privaat. Netflix: clubgoed. Vis in zee: gemeenschappelijk. Straatverlichting: zuiver publiek, met het vrijbuitersprobleem.'],['Mz','Gratis meeliften zonder te betalen.']]}
+]},
+{t:'Conjunctuur en inflatie',q:['De CPI stijgt van 104 naar 109,2. Hoeveel is de inflatie?','5%, want (109,2 − 104) / 104.'],p:[
+ {s:'golf',alt:'Conjunctuurgolf',b:[['P','Conjunctuur is de schommeling rond de trend. Hoogconjunctuur: groei boven de trend. Laagconjunctuur: eronder. Recessie: minstens twee kwartalen krimp. Crisis: omslag van hoog naar recessie.'],['Mz','Op en neer als mijn motivatie.']]},
+ {s:'burst',p:{l:['vertrouwen, werkloosheid,','investeringen, rente...'],s:15},alt:'Indicatoren',b:[['P','Indicatoren: consumenten- en ondernemersvertrouwen (kwalitatief), werkloosheid, investeringen, faillissementen, beursindex, inflatie, rente. Centrale banken verhogen de rente in hoogconjunctuur.'],['M','Een pandemie is exogeen, loonstijging is endogeen.']]},
+ {s:'burst',p:{l:['vraag · kosten · import','monetair · structureel · conjunctureel'],s:12},alt:'Soorten inflatie',b:[['P','Inflatie: vraag-, kosten-, import-, monetaire, structurele en conjuncturele. Shrinkflation: kleiner pak, zelfde prijs. Beknibbelflatie: slechtere service.'],['M!','Mijn chips-zak wordt ook elk jaar kleiner!']]},
+ {s:'tags',alt:'Inflatie berekenen',b:[['P','CPI 104 naar 109,2 is 5%. De gezondheidsindex (zonder alcohol, tabak, brandstof) bepaalt indexering. Spilindex: lonen en uitkeringen indexeren automatisch. De ECB verhoogt de rente tegen inflatie.'],['Mz','Schulden worden lichter, spaargeld minder waard.']]}
+]},
+{t:'Internationale handel',q:['€1 = $1,08. Hoeveel euro kost een product van $540?','€500, want 540 ÷ 1,08.'],p:[
+ {s:'burst',p:{l:['vergelding · zelfvoorziening','tewerkstelling · duurzaamheid','gezondheid'],s:13},alt:'Redenen',b:[['P','Overheden belemmeren handel om vijf redenen. Tarifair: invoerrechten en subsidies. Niet-tarifair: quota, technische eisen en embargo.'],['M','Quotum is dus niet-tarifair. Onthouden.']]},
+ {s:'handel',alt:'Invoerrecht',b:[['P','Een invoerrecht verhoogt de binnenlandse prijs. Het verbruik daalt, binnenlandse producenten worden beschermd en de consument betaalt meer.'],['Mz','Prima voor de bakker, slecht voor mijn portemonnee.']]},
+ {s:'trap',alt:'Integratietrap',b:[['P','Vrijhandelszone, douane-unie (gemeenschappelijk buitentarief), gemeenschappelijke markt, economische unie en monetaire unie (eurozone met ECB).'],['M!','Vijf treden, de euro staat bovenaan.']]},
+ {s:'munt',alt:'Wisselkoers',b:[['P','Appreciatie: munt sterker, je krijgt meer vreemde valuta. Depreciatie: zwakker. Wisselkoersrisico dek je af met een termijncontract. Handelsbalans = X − M, invoerquote = M / bbp.'],['M','Delen door de koers, niet vermenigvuldigen!']]}
+]},
+{t:'Onderzoek',q:['Noem de zes criteria voor een goede onderzoeksvraag.','Open, enkelvoudig, objectief, haalbaar, onderzoekbaar en relevant.'],p:[
+ {s:'cyclus',alt:'Onderzoekscyclus',b:[['P','Vier fasen: oriënteren (vraag en hypothese), voorbereiden (bronnen, methode, plan), uitvoeren en rapporteren (resultaat, besluit, reflectie).'],['M','Dus ik doe niet meteen conclusies.']]},
+ {s:'burst',p:{l:['open · enkelvoudig','objectief · haalbaar','onderzoekbaar · relevant'],s:15},alt:'Criteria',b:[['P','Deskresearch gebruikt bestaande bronnen, fieldresearch zelf verzamelde gegevens. Bij meerdere conclusies kies je de meest volledige die het best bij de gegevens past.'],['M!','Klaar! Nog één ding: slapen voor het examen.']]}
+]}
+];
+
+/* ---------- opbouw ---------- */
+(function(){
+  var cast=document.getElementById('cast'),nav=document.getElementById('nav'),book=document.getElementById('book');
+  cast.innerHTML='<div>'+av('M')+'<span><b>Mika</b><br>student, weinig energie</span></div><div>'+av('P')+'<span><b>Prof. Miauw</b><br>kat, bril, veel geduld nodig</span></div>';
+  var html='',navh='';
+  BOOK.forEach(function(ch,ci){
+    var id='h'+(ci+1);
+    navh+='<a href="#'+id+'">'+(ci+1)+'. '+ch.t+'</a>';
+    html+='<section class="chapter" id="'+id+'"><h2><b>'+(ci+1)+'</b>'+ch.t+'</h2><div class="page">';
+    ch.p.forEach(function(pn){
+      var svg='<svg viewBox="0 0 300 150" role="img" aria-label="'+(pn.alt||'')+'">'+DEFS+SC[pn.s](pn.p||{})+'</svg>';
+      html+='<div class="panel"><div class="scene">'+svg+'</div><div class="talk">';
+      pn.b.forEach(function(l,li){
+        var prof=l[0]==='P';
+        html+='<div class="line'+(li%2?' right':'')+'">'+av(l[0])+'<div class="bubble'+(prof?' prof':'')+'"><span class="who">'+NAME[l[0]]+'</span>'+l[1]+'</div></div>';
+      });
+      html+='</div></div>';
+    });
+    html+='</div><div class="test"><button type="button" data-t="'+ci+'" aria-expanded="false">Toon antwoord</button><p><b>Test jezelf:</b> '+ch.q[0]+'</p><div class="ans" id="a'+ci+'">'+ch.q[1]+'</div></div></section>';
+  });
+  nav.innerHTML=navh;book.innerHTML=html;
+  book.addEventListener('click',function(e){
+    var b=e.target.closest('button[data-t]');if(!b)return;
+    var a=document.getElementById('a'+b.getAttribute('data-t'));
+    var on=a.classList.toggle('show');
+    b.setAttribute('aria-expanded',on?'true':'false');
+    b.textContent=on?'Verberg antwoord':'Toon antwoord';
+  });
+})();
+</script>
+</body>
+</html>
